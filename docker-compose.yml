@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 16 with pgvector extension (Audit trail & Vector Embeddings)
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: vishanti-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-vishanti_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-vishanti_secure_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-vishanti_ledger}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vishanti_admin -d vishanti_ledger"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis 7 (BullMQ Queue, Idempotency-Key, Pub/Sub socket adapter)
+  redis:
+    image: redis:7-alpine
+    container_name: vishanti-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # MinIO S3 Object Storage (Direct client upload with SHA-256 validation)
+  minio:
+    image: minio/minio:latest
+    container_name: vishanti-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  # ClamAV Antivirus Daemon (Attachment virus scan before verification)
+  clamav:
+    image: clamav/clamav:stable_base
+    container_name: vishanti-clamav
+    restart: unless-stopped
+    ports:
+      - "3310:3310"
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
