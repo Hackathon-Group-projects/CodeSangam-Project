@@ -1,0 +1,30 @@
+{
+  "name": "the-vishanti-ledger",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The Vishanti Ledger: Tamper-Evident Grievance Redressal & Cryptographic Audit Portal (CodeSangam - Problem Statement 03)",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:web": "npm run dev --workspace=@vishanti/web",
+    "dev:api": "npm run dev --workspace=@vishanti/api",
+    "dev:worker": "npm run dev --workspace=@vishanti/worker",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "keywords": [
+    "grievance-redressal",
+    "sha-256",
+    "cryptographic-audit",
+    "tamper-evident",
+    "nextjs",
+    "fastify",
+    "bullmq"
+  ],
+  "author": "Team TriNity (Harsh, Kashvi, Aryan)",
+  "license": "MIT"
+}

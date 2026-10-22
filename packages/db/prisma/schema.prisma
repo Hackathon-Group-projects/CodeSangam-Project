@@ -1,0 +1,156 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector")]
+}
+
+enum Role {
+  PETITIONER
+  OFFICER_TIER_1
+  COMMITTEE_TIER_2
+  OMBUDSMAN_TIER_3
+  AUDITOR
+  ADMIN
+}
+
+enum Category {
+  ACADEMIC
+  HOSTEL_MESS
+  FINANCIAL_FEES
+  HARASSMENT_DISCIPLINARY
+  INFRASTRUCTURE
+  ADMINISTRATION
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum Status {
+  FILED
+  ASSIGNED
+  IN_REVIEW
+  RESOLVED
+  ESCALATED
+}
+
+enum ScanStatus {
+  PENDING
+  CLEAN
+  INFECTED
+  FAILED
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String?   @unique
+  passwordHash String?
+  name         String?
+  role         Role      @default(PETITIONER)
+  tier         Int       @default(0) // 0 for petitioner, 1 for officer, 2 for committee, 3 for ombudsman
+  pseudonym    String?   // For anonymous petitioners HMAC
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  assignedTickets Ticket[] @relation("AssignedOfficer")
+  auditActions    AuditEntry[]
+
+  @@map("users")
+}
+
+model Ticket {
+  id              String      @id @default(uuid())
+  title           String
+  description     String
+  category        Category
+  priority        Priority
+  status          Status      @default(FILED)
+  isAnonymous     Boolean     @default(false)
+  receiptHash     String?     // Stored SHA-256 of high-entropy receipt secret
+  currentTier     Int         @default(1)
+  version         Int         @default(1) // For optimistic/pessimistic concurrency guards
+  slaDueAt        DateTime?
+  assignedToId    String?
+  clusterGroupId  String?
+  embedding       Unsupported("vector(384)")? // pgvector 384-dimensional all-MiniLM-L6-v2
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  assignedTo      User?       @relation("AssignedOfficer", fields: [assignedToId], references: [id])
+  clusterGroup    ClusterGroup? @relation(fields: [clusterGroupId], references: [id])
+  auditEntries    AuditEntry[]
+  attachments     Attachment[]
+
+  @@index([status])
+  @@index([category])
+  @@index([slaDueAt])
+  @@map("tickets")
+}
+
+model AuditEntry {
+  id          String    @id @default(uuid())
+  ticketId    String
+  seq         Int       // Sequence number: 0, 1, 2...
+  type        String    // CREATED, ASSIGNED, TRANSITIONED, COMMENTED, RESOLVED, DISPUTED, ESCALATED
+  actorRef    String    // User ID or HMAC pseudonym
+  payload     Json      // Canonical JSON payload of changes
+  prevHash    String    // H_{n-1} hash in the chain (0x00... for genesis)
+  hash        String    // H_n = SHA-256(H_{n-1} || seq || ticketId || actorRef || type || canonicalJSON(payload) || timestamp)
+  timestamp   DateTime  @default(now())
+
+  ticket      Ticket    @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  actor       User?     @relation(fields: [actorRef], references: [id], onDelete: SetNull)
+
+  @@unique([ticketId, seq])
+  @@index([ticketId])
+  @@map("audit_entries")
+}
+
+model Attachment {
+  id          String      @id @default(uuid())
+  ticketId    String
+  fileName    String
+  storageKey  String
+  sha256Hash  String
+  mimeType    String
+  fileSize    Int
+  scanStatus  ScanStatus  @default(PENDING)
+  createdAt   DateTime    @default(now())
+
+  ticket      Ticket      @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@map("attachments")
+}
+
+model SlaPolicy {
+  id           String    @id @default(uuid())
+  priority     Priority  @unique
+  tier         Int
+  responseMins Int
+  resolveMins  Int
+
+  @@map("sla_policies")
+}
+
+model ClusterGroup {
+  id            String    @id @default(uuid())
+  label         String
+  centroid      Unsupported("vector(384)")?
+  ticketCount   Int       @default(0)
+  avgSentiment  Float     @default(0.0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  tickets       Ticket[]
+
+  @@map("cluster_groups")
+}

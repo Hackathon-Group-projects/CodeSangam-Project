@@ -1,0 +1,22 @@
+{
+  "name": "@vishanti/worker",
+  "version": "1.0.0",
+  "description": "BullMQ Worker Daemon, AI Inference, and SLA Escalation",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@vishanti/db": "*",
+    "@vishanti/shared": "*",
+    "bullmq": "^5.8.3",
+    "ioredis": "^5.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.2",
+    "tsx": "^4.15.7",
+    "typescript": "^5.4.5"
+  }
+}
