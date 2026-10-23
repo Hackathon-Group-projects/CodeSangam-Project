@@ -41,6 +41,21 @@ desktop.ini
 # MinIO & ClamAV Data
 docker/data/
 minio-data/
+**/postgres-data/
+**/redis-data/
+**/minio-data/
+
+# Credentials and local secret stores
+.secrets/
+secrets/
+*.p12
+*.pfx
+*.key
+
+# Local database exports
+*.dump
+*.backup
+*.sql.gz
 
 # Testing & Coverage
 coverage/

@@ -5,15 +5,14 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:generate": "cd ../.. && prisma generate --schema packages/db/prisma/schema.prisma",
+    "prisma:migrate": "cd ../.. && prisma migrate dev --schema packages/db/prisma/schema.prisma",
+    "prisma:studio": "cd ../.. && prisma studio --schema packages/db/prisma/schema.prisma"
   },
   "dependencies": {
-    "@prisma/client": "^5.15.0"
+    "@prisma/client": "^5.22.0"
   },
   "devDependencies": {
-    "prisma": "^5.15.0",
     "typescript": "^5.4.5"
   }
 }
