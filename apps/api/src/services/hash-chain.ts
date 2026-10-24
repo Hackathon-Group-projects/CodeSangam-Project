@@ -1,6 +1,5 @@
 import { createHash } from 'node:crypto';
 
-/** JSON values accepted by PostgreSQL's Json/JsonB fields. */
 export type JsonValue =
   | null
   | boolean
@@ -10,112 +9,67 @@ export type JsonValue =
   | { [key: string]: JsonValue };
 
 export interface HashChainInput {
-  prevHash: string; // H_{n-1}; 64 zeroes for the genesis entry
+  prevHash: string;
   seq: number;
   ticketId: string;
-  actorRef: string; // Account ID or per-ticket HMAC pseudonym
+  actorRef: string;
   type: string;
   payload: JsonValue;
   timestamp: string | Date;
 }
 
-/** The previous-hash value used by each ticket's sequence-zero entry. */
+/** The first audit entry has no earlier entry, so it uses 64 zeroes. */
 export const GENESIS_HASH = '0'.repeat(64);
 
-/**
- * Serialize JSON deterministically by sorting object keys recursively.
- * Rejecting non-JSON JavaScript values prevents different callers from
- * silently hashing different representations of the same input.
- */
+/** Sort object keys so equivalent JSON data always produces the same text. */
 export function canonicalJSON(value: JsonValue): string {
-  return serializeJson(value, new WeakSet<object>());
-}
-
-function serializeJson(value: unknown, ancestors: WeakSet<object>): string {
-  if (value === null) return 'null';
-
-  if (typeof value === 'string' || typeof value === 'boolean') {
-    return JSON.stringify(value) as string;
-  }
-
-  if (typeof value === 'number') {
-    if (!Number.isFinite(value)) {
-      throw new TypeError('Canonical JSON does not support non-finite numbers');
+  if (value === null || typeof value !== 'object') {
+    if (typeof value === 'number' && !Number.isFinite(value)) {
+      throw new TypeError('JSON numbers must be finite');
     }
-    return JSON.stringify(value) as string;
+    const result = JSON.stringify(value);
+    if (result === undefined) throw new TypeError('Value is not valid JSON');
+    return result;
   }
 
   if (Array.isArray(value)) {
-    if (ancestors.has(value)) {
-      throw new TypeError('Canonical JSON does not support circular values');
-    }
-
-    ancestors.add(value);
-    // Array.from visits sparse slots as undefined so they are rejected instead
-    // of colliding with an empty array during canonicalization.
-    const serialized = `[${Array.from(value, (item) => serializeJson(item, ancestors)).join(',')}]`;
-    ancestors.delete(value);
-    return serialized;
+    return `[${Array.from(value, (item) => canonicalJSON(item)).join(',')}]`;
   }
 
-  if (typeof value === 'object') {
-    const prototype = Object.getPrototypeOf(value);
-    if (prototype !== Object.prototype && prototype !== null) {
-      throw new TypeError('Canonical JSON accepts only plain JSON objects');
-    }
-
-    if (ancestors.has(value)) {
-      throw new TypeError('Canonical JSON does not support circular values');
-    }
-
-    ancestors.add(value);
-    const sortedKeys = Object.keys(value).sort();
-    const pairs = sortedKeys.map(
-      (key) => `${JSON.stringify(key)}:${serializeJson((value as Record<string, unknown>)[key], ancestors)}`
-    );
-    ancestors.delete(value);
-    return `{${pairs.join(',')}}`;
-  }
-
-  // This branch also protects JavaScript callers that bypass the TypeScript type.
-  throw new TypeError('Canonical JSON accepts only JSON-compatible values');
+  const entries = Object.keys(value)
+    .sort()
+    .map((key) => `${JSON.stringify(key)}:${canonicalJSON(value[key])}`);
+  return `{${entries.join(',')}}`;
 }
 
-/**
- * Compute the blueprint's chain value:
- * SHA-256(prevHash || seq || ticketId || actorRef || type ||
- *         canonicalJSON(payload) || timestamp)
- */
+/** Hash this entry's fields, including the previous entry's hash. */
 export function computeAuditHash(input: HashChainInput): string {
   if (!Number.isSafeInteger(input.seq) || input.seq < 0) {
-    throw new RangeError('Audit sequence must be a non-negative safe integer');
+    throw new RangeError('Audit sequence must be a non-negative integer');
   }
 
   if (!/^[0-9a-f]{64}$/.test(input.prevHash)) {
-    throw new TypeError('Previous hash must be a lowercase 64-character SHA-256 hex value');
+    throw new TypeError('Previous hash must be a 64-character SHA-256 hex value');
   }
 
   if (!input.ticketId || !input.actorRef || !input.type) {
-    throw new TypeError('ticketId, actorRef, and type must be non-empty strings');
+    throw new TypeError('ticketId, actorRef, and type are required');
   }
 
   const timestamp =
-    typeof input.timestamp === 'string'
-      ? input.timestamp
-      : input.timestamp.toISOString();
+    input.timestamp instanceof Date ? input.timestamp.toISOString() : input.timestamp;
 
   if (!timestamp.trim() || !Number.isFinite(Date.parse(timestamp))) {
-    throw new TypeError('Audit timestamp must be a valid ISO timestamp');
+    throw new TypeError('Timestamp must be a valid date');
   }
 
-  const canonicalPayload = canonicalJSON(input.payload);
   const source = [
     input.prevHash,
-    String(input.seq),
+    input.seq,
     input.ticketId,
     input.actorRef,
     input.type,
-    canonicalPayload,
+    canonicalJSON(input.payload),
     timestamp
   ].join('||');
 
