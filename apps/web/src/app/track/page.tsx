@@ -160,6 +160,17 @@ export default function TrackPetitionPage() {
               ))}
             </div>
           </div>
+
+          {/* Direct link to Full Case View */}
+          <div className="pt-2">
+            <Link
+              href={`/tickets/${searchResult.id}`}
+              className="flex w-full items-center justify-center space-x-2 rounded-xl bg-indigo-600 py-3 text-xs font-semibold text-white shadow hover:bg-indigo-500 transition"
+            >
+              <span>Open Interactive Case View & 72h Dispute Window</span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
       )}
 
