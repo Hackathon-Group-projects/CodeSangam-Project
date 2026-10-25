@@ -69,6 +69,14 @@ npm run dev:web
 - Redis: `localhost:6379`
 - ClamAV: `localhost:3310`
 
+## Phase 2 API endpoints
+
+- `POST /api/auth/register` creates a petitioner account and returns a one-hour JWT.
+- `POST /api/auth/login` checks the password and returns a JWT.
+- `POST /api/tickets` creates a ticket and its first audit entry in one database transaction. Send an `Idempotency-Key` header. Signed-in submissions need `Authorization: Bearer <token>`; anonymous submissions set `isAnonymous: true` and receive a one-time `receiptSecret` in the response.
+
+The API accepts `WEB_ORIGIN` to set the browser origin allowed by CORS. For local use it defaults to `http://localhost:3000`.
+
 The MinIO console credentials are `MINIO_ROOT_USER` and `MINIO_ROOT_PASSWORD` from `.env`.
 
 ## Useful commands
