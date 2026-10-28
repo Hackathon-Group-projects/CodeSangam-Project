@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CreateTicketSchema, CreateTicketInput, CategoryEnum, PriorityEnum, AttachmentMeta } from '@vishanti/shared';
 import { useAuth } from '../../components/auth-provider';
-import { computeFileSHA256, generateClientReceiptSecret } from '../../lib/crypto';
+import { computeFileSHA256 } from '../../lib/crypto';
 import { uploadAttachmentDirectly } from '../../lib/s3-upload';
 import { apiFetch } from '../../lib/api-client';
 import { ReceiptModal } from '../../components/receipt-modal';
@@ -120,13 +120,10 @@ function GrievanceIntakeContent() {
         uploadedMetas.push(meta);
       }
 
-      // Step 2: Agar user ne Anonymous chuna hai, toh browser me 32-byte secret code banate hain
-      const receiptSecret = isAnonymous ? generateClientReceiptSecret() : undefined;
-
+      // Step 2: Anonymous receipt secret server banata hai, isliye browser apna alag secret nahi bhejta.
       const payload = {
         ...data,
         isAnonymous,
-        receiptSecret,
         attachments: uploadedMetas,
       };
 
@@ -136,32 +133,22 @@ function GrievanceIntakeContent() {
         body: JSON.stringify(payload),
       });
 
-      if (res.success && res.data) {
+      if (res.success && res.data) { // Server se ticket ki asal receipt aayi ho to use screen par dikhate hain.
+        const createdTicket = res.data.ticket || res.data; // API ka ticket andar ho ya seedha ho, dono roop sambhalte hain.
         if (isAnonymous) {
-          // Anonymous petition par user ko receipt modal popup dikhate hain
+          const serverSecret = res.data.receiptSecret; // Sirf server ka banaya hua secret user ki asli receipt hota hai.
+          if (!createdTicket.id || !serverSecret) throw new Error('The server did not return the anonymous receipt. Please retry.'); // Asli receipt na ho to jhootha code dikhane ke bajay saaf error dikhate hain.
           setCreatedTicketInfo({
-            id: res.data.id || 'vishanti-' + Math.random().toString(36).substr(2, 9),
-            secret: receiptSecret!,
+            id: createdTicket.id,
+            secret: serverSecret,
             title: data.title,
           });
           setModalOpen(true);
         } else {
           router.push('/dashboard');
         }
-      } else {
-        // Fallback for local dev mode before Fastify server is up
-        console.warn('Backend unavailable, simulating local ticket genesis:', res.error);
-        const generatedId = 'vishanti-uuid-' + Math.random().toString(36).substring(2, 10);
-        if (isAnonymous) {
-          setCreatedTicketInfo({
-            id: generatedId,
-            secret: receiptSecret || generateClientReceiptSecret(),
-            title: data.title,
-          });
-          setModalOpen(true);
-        } else {
-          router.push('/dashboard');
-        }
+      } else { // Server ne ticket na banaya ho to nakli receipt dene ke bajay wajah dikhate hain.
+        setErrorMessage(res.error || 'The petition could not be saved. Please try again.');
       }
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to submit petition. Please check connections.');

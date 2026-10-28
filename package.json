@@ -12,6 +12,8 @@
     "dev:web": "npm run dev --workspace=@vishanti/web",
     "dev:api": "npm run dev --workspace=@vishanti/api",
     "dev:worker": "npm run dev --workspace=@vishanti/worker",
+    "test:e2e": "npm run test:e2e --workspace=@vishanti/web",
+    "test:e2e:report": "npm run test:e2e:report --workspace=@vishanti/web",
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present"
