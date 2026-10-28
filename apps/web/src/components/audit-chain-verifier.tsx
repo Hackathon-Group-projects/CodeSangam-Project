@@ -1,4 +1,4 @@
-'use client'; // Is chhote tool ko browser mein chalate hain, kyunki yahin user ticket code likhega.
+'use client'; // Next.js ko batate hain ki user ka input aur button browser mein chalenge.
 
 import { type FormEvent, useState } from 'react'; // Form bhejne aur screen ka haal yaad rakhne ke React tools lete hain.
 import { AlertTriangle, CheckCircle2, LoaderCircle, Search, ShieldCheck, X } from 'lucide-react'; // Check, wait aur search ke icons lete hain.
@@ -7,6 +7,7 @@ import { type AuditEntryForVerification, verifyAuditChain } from '../lib/audit-v
 
 // Ticket code dekar uski public audit chain ko check karne wala box banate hain.
 export function AuditChainVerifier() {
+  // React ke useState se form, popup aur jawab yaad rehte hain; badalne par naya haal screen par dikh jata hai.
   const [ticketId, setTicketId] = useState(''); // User jo ticket code likhega use yahan yaad rakhte hain.
   const [busy, setBusy] = useState(false); // Check chal raha hai ya nahi dikhane ke liye nishani rakhte hain.
   const [open, setOpen] = useState(false); // Check wala chhota modal khula hai ya band, yeh yaad rakhte hain.

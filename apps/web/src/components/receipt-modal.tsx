@@ -1,7 +1,7 @@
-'use client'; // Browser me interactive popup modal chalane ke liye
+'use client'; // Next.js ko batate hain ki copy aur download wale button browser mein chalenge.
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation'; // Next se receipt sambhalne ke baad tracking page kholte hain.
 import { ShieldAlert, Copy, Check, Download, ArrowRight, Key } from 'lucide-react';
 
 // TS CONCEPT (interface ReceiptModalProps):
@@ -19,8 +19,10 @@ export function ReceiptModal({
   receiptSecret,
   title,
 }: ReceiptModalProps) {
+  // Parent page se aaye props batate hain ki popup khule ya nahi aur kaunsi receipt dikhani hai.
   const router = useRouter();             // Next.js page navigation hook
-  const [copied, setCopied] = useState(false); // State: Copy button clicked hua ya nahi
+  // React ka useState value yaad rakhta hai aur badalne par popup phir dikhata hai, taaki copy ka label turant badle.
+  const [copied, setCopied] = useState(false); // Copy button clicked hua ya nahi
 
   // Agar modal open nahi hai toh kuch bhi render mat karo
   if (!isOpen) return null;

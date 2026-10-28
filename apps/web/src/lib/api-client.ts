@@ -1,4 +1,5 @@
 // Backend API ka base address (environment variable se ya default localhost:4000)
+// Next.js mein NEXT_PUBLIC_ wali setting browser tak ja sakti hai; isliye yahan sirf server ka address rakha hai.
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 // TS CONCEPT (interface & Generic <T>): 

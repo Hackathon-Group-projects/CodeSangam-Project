@@ -1,7 +1,7 @@
 'use client'; // Next.js ko batate hain ki yeh screen browser mein chalegi, kyunki login aur live updates browser se milte hain.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'; // React se screen yaad rakhne, update karne aur browser ke saath kaam karne ke tools lete hain.
-import Link from 'next/link'; // Next.js ke andar pages ke beech jaldi jaane wala link lete hain.
+import Link from 'next/link'; // Next ka Link pages ke beech jaata hai bina poori site dobara load kiye.
 import { io, type Socket } from 'socket.io-client'; // Server se live paighaam lene ka zariya aur us connection ka TS shape lete hain.
 import { Activity, AlertTriangle, Bell, Clock3, ExternalLink, LoaderCircle, MessageSquare, RefreshCw, Send, ShieldCheck, X } from 'lucide-react'; // Screen par chhote pehchaan wale icons lete hain.
 import { useAuth } from '../../../components/auth-provider'; // Login ki hui user ki jaankari lene wala app ka helper lete hain.
@@ -53,6 +53,7 @@ type OfficerComment = {
 };
 
 // Browser mein server ka pata alag diya ho to woh lete hain; warna local API ka pata rakhte hain.
+// Next.js mein NEXT_PUBLIC_ se shuru setting browser tak ja sakti hai; yahan sirf server ka address hai, password nahi.
 const API_ORIGIN = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 // TS ka Record ek seedhi dictionary hai: role naam se adhikari star dhoondhne ke liye.
@@ -79,8 +80,10 @@ function deadlineLabel(value: string | null): { label: string; overdue: boolean;
 }
 
 // Is screen ka main hissa hai: officer apne kaam dekh sakta aur update sun sakta hai.
+// Is folder ka page.tsx Next.js mein /officer/dashboard address banata hai.
 export default function OfficerDashboard() {
   const { user, token, isLoading: authLoading, isAuthenticated } = useAuth(); // Login user, uska key aur login check ka haal lete hain.
+  // React mein useState screen ki yaad hai: iski value badle to is page ka dikhne wala hissa phir banta hai.
   const [tickets, setTickets] = useState<OfficerTicket[]>([]); // Aaye hue ticket yahan yaad rakhte hain; TS batata hai ki list mein ticket hi hon.
   const [inbox, setInbox] = useState<InboxNotice[]>([]); // Aaye hue alerts is list mein rakhte hain.
   const [inboxLoaded, setInboxLoaded] = useState(false); // Saved inbox padhi gayi hai ya nahi yaad rakhte hain.
@@ -96,6 +99,7 @@ export default function OfficerDashboard() {
   const [notice, setNotice] = useState(''); // Abhi aayi chhoti jaankari screen par dikhate hain.
   const [inboxOpen, setInboxOpen] = useState(false); // Bell dabane par inbox khula hai ya band yaad rakhte hain.
   const [selectedTicket, setSelectedTicket] = useState<OfficerTicket | null>(null); // Khuli hui case drawer ke ticket ko yaad rakhte hain.
+  // React ka useRef ek dabba jaisa hai: iski cheez badal sakte hain bina poori screen dobara banwaye.
   const socketRef = useRef<Socket | null>(null); // Live connection ka handle rakhte hain taaki naye case rooms mein jud saken.
 
   // User ke role se uska adhikari star nikalte hain; role nahi mila to yeh khali rahega.
@@ -122,10 +126,11 @@ export default function OfficerDashboard() {
   }, [inbox, inboxLoaded, user?.id]); // Inbox ya user badle to saved copy bhi badalte hain.
 
   // Connection waapas aane par server mein jama chhute hue alerts bhi inbox mein lete hain.
+  // useCallback isi kaam ka function yaad rakhta hai, taaki bekaar mein naya function ban kar effect na chalaye.
   const loadServerInbox = useCallback(async () => {
     const result = await apiFetch<InboxNotice[]>('/api/notifications'); // Login user ke liye jama notification list server se mangwate hain.
     if (!result.success || !Array.isArray(result.data)) return; // API na ho to local inbox waise hi rehne dete hain.
-    setInbox((current) => { // Server aur browser mein rakhe notices ko ek saath rakhte hain.
+    setInbox((current) => { // React ka current abhi wali inbox deta hai; usmein server ke naye notices jodte hain.
       const byId = new Map(current.map((item) => [item.id, item])); // Pehle local notices ko unke alag code se map karte hain.
       result.data!.forEach((item) => byId.set(item.id, byId.has(item.id) ? { ...item, read: byId.get(item.id)!.read } : item)); // Naye server alerts jodte hain aur padhe hone ki nishani bachate hain.
       return Array.from(byId.values()).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 50); // Naye pehle rakhkar sirf 50 bachate hain.
@@ -133,6 +138,7 @@ export default function OfficerDashboard() {
   }, []); // Is request ko refresh cycle ke beech stable rakhte hain.
 
   // Officer ke liye tickets server se mangwate hain aur saamne aayi dikkat ko screen par rakhte hain.
+  // Is function ko yaad rakhte hain, taaki ise dekhne wale effects har baar bekaar mein na chal padhein.
   const loadTickets = useCallback(async () => {
     setLoading(true); // Data aane tak loading nishaan dikhate hain.
     setError(''); // Purana error hata dete hain, taaki nayi koshish saaf rahe.
@@ -197,6 +203,7 @@ export default function OfficerDashboard() {
   }
 
   // Chune hue status, urgency, category aur deadline ke mutabik ticket list chhantte hain.
+  // useMemo chhanti hui list yaad rakhta hai aur tabhi dobara banata hai jab list ya filter badle.
   const visibleTickets = useMemo(() => tickets.filter((ticket) => { // Har ticket ko sharton se milakar sahi list banate hain.
     if (statusFilter === 'ACTIVE' && ticket.status === 'RESOLVED') return false; // Active view mein solved tickets chhupate hain.
     if (statusFilter !== 'ACTIVE' && ticket.status !== statusFilter) return false; // Khaas status chuna ho to doosre hata dete hain.
@@ -277,7 +284,8 @@ export default function OfficerDashboard() {
       {/* Khaali list ho to sahi wajah ya khaali queue ka seedha paighaam dikhate hain. */}
       {visibleTickets.length === 0 ? <div className="px-6 py-14 text-center">{error ? <p className="text-sm text-slate-400">The queue is unavailable until the officer API is reachable.</p> : <><Clock3 className="mx-auto h-8 w-8 text-slate-600" /><p className="mt-3 text-sm font-medium text-slate-300">No petitions in this view</p><p className="mt-1 text-xs text-slate-500">New cases assigned to Tier {tier} will appear here.</p></>}</div> : <div className="divide-y divide-slate-800/80">
         {/* Har ticket ke liye uski halat, deadline aur mumkin agla kaam dikhate hain. */}
-        {visibleTickets.map((ticket) => {
+      {/* React ka map har ticket ka officer card banata hai; key React ko har card ki alag pehchaan deti hai. */}
+      {visibleTickets.map((ticket) => {
           const deadline = deadlineLabel(ticket.slaDueAt); // Ticket ki deadline ko padhne layak banate hain.
           const nextStatus: TicketStatus | null = ticket.status === 'FILED' ? 'ASSIGNED' : ticket.status === 'ASSIGNED' ? 'IN_REVIEW' : ticket.status === 'IN_REVIEW' ? 'RESOLVED' : null; // Maujooda sthiti se agla allowed button chunne mein madad lete hain.
           return <article key={ticket.id} className="p-5 sm:p-6">
@@ -305,6 +313,8 @@ export default function OfficerDashboard() {
 
 // Case drawer status buttons aur staff ke private comment thread ko ek jagah rakhta hai.
 function TicketActionDrawer({ ticket, busy, onClose, onTransition }: { ticket: OfficerTicket; busy: boolean; onClose: () => void; onTransition: (status: TicketStatus, note?: string) => void }) {
+  // Parent officer page is drawer ko ticket aur button kaam bhejta hai; yehi uske props hain.
+  // React ka useState drawer ke text yaad rakhta hai aur har badlaav ko turant screen par dikhata hai.
   const [resolutionNote, setResolutionNote] = useState(''); // Resolution bhejne se pehle adhikari ka note yahan rakhte hain.
   const [comments, setComments] = useState<OfficerComment[]>([]); // Server se aaye discussion notes yahan dikhate hain.
   const [draft, setDraft] = useState(''); // Naya internal note likhte waqt uska text yahan rakhte hain.
@@ -314,6 +324,7 @@ function TicketActionDrawer({ ticket, busy, onClose, onTransition }: { ticket: O
   const nextStatus: TicketStatus | null = ticket.status === 'FILED' ? 'ASSIGNED' : ticket.status === 'ASSIGNED' ? 'IN_REVIEW' : ticket.status === 'IN_REVIEW' ? 'RESOLVED' : null; // Ticket ki maujooda sthiti se agla button nikalte hain.
 
   // Is ticket ke internal discussion notes API se laate hain.
+  // Is function ko yaad rakhte hain, kyunki neeche ka effect ise ticket badalne par chalata hai.
   const loadComments = useCallback(async () => {
     setCommentLoading(true); // Purani list ke baad nayi list laate waqt loading dikhate hain.
     const result = await apiFetch<OfficerComment[]>(`/api/tickets/${encodeURIComponent(ticket.id)}/comments?scope=internal`); // Sirf staff ke notes mangwate hain.

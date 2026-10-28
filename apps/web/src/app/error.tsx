@@ -1,4 +1,4 @@
-'use client'; // Error screen browser mein chalta hai, kyunki retry button page ko dobara kholta hai.
+'use client'; // Next.js mein error.tsx khaas file hai jo page tootne par dikhai jaati hai; retry button browser mein chalta hai.
 
 import Link from 'next/link'; // User ko home page tak le jaane wala link lete hain.
 import { useEffect } from 'react'; // Error log karne ke liye page khulne ke baad chalne wala React tool lete hain.

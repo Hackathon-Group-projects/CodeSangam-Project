@@ -1,4 +1,4 @@
-'use client';
+'use client'; // Next.js ko batate hain ki form aur file chunne ka kaam browser mein chalega.
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -24,11 +24,15 @@ import {
   Send,
 } from 'lucide-react';
 
+// Is folder ka page.tsx Next.js mein /intake address banata hai; andar wala hissa form dikhata hai.
 function GrievanceIntakeContent() {
+  // Next.js ka useRouter complaint submit hone par receipt ya doosra page kholne deta hai.
   const router = useRouter();
+  // Next.js ka useSearchParams address ke ? ke baad aayi chhoti jaankari, jaise mode=anonymous, padhta hai.
   const searchParams = useSearchParams();
   const { isAuthenticated, user } = useAuth();
 
+  // React ka useState form ke chune hue jawab yaad rakhta hai; badalne par screen nayi value ke saath phir dikhti hai.
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [attachments, setAttachments] = useState<
     Array<{ file: File; meta: AttachmentMeta; isUploading: boolean }>
@@ -44,13 +48,14 @@ function GrievanceIntakeContent() {
     title: string;
   } | null>(null);
 
+  // React ka useEffect address ka mode page khulne ke baad padhta hai aur anonymous box chun deta hai.
   useEffect(() => {
     if (searchParams.get('mode') === 'anonymous') {
       setIsAnonymous(true);
     }
   }, [searchParams]);
 
-  // useForm: React Hook Form initialize karte hain
+  // useForm input ki values aur galtiyon ko sambhalta hai, jaise form bharte waqt ek madadgar checklist.
   // TS CONCEPT (<CreateTicketInput>): Form ka data wahi hoga jo CreateTicketSchema me define hai
   // zodResolver: User ke har keystroke par Zod schema se validation check karta hai
   const {
@@ -233,6 +238,7 @@ function GrievanceIntakeContent() {
       </div>
 
       {/* Main Intake Form */}
+      {/* Form bhejne par pehle jawab check hote hain, phir sahi hone par hamara kaam chalta hai. */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         
         {/* Category & Priority Grid */}
@@ -406,6 +412,7 @@ function GrievanceIntakeContent() {
 }
 
 export default function GrievanceIntakePage() {
+  // Suspense ko waiting room samjho: form taiyaar hone tak neeche diya loading paighaam dikhata hai.
   return (
     <Suspense
       fallback={

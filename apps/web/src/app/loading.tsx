@@ -1,4 +1,4 @@
-// Next.js page ka data aane ka intezar ho to yeh halka skeleton dikhata hai.
+// Next.js loading.tsx ko khud dikhata hai jab is address ka page taiyaar ho raha hota hai.
 export default function Loading() {
   return <div className="animate-pulse space-y-6 py-4" aria-label="Loading page"> {/* Loading dauran page ki jagah khali na lage. */}
     <div className="h-12 w-2/3 rounded-lg bg-slate-800" /> {/* Heading ki jagah ek dhundla patta dikhate hain. */}

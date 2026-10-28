@@ -1,17 +1,24 @@
-'use client';
+'use client'; // Next.js ko batate hain ki search box aur natija browser mein badlenge.
 
 import React, { useState } from 'react';
-import Link from 'next/link';
+import Link from 'next/link'; // Next ka Link complaint ke detail page par jaldi le jaata hai.
 import { Search, ShieldCheck, Clock, AlertTriangle, ArrowRight, CheckCircle2, Hash, FileText } from 'lucide-react';
 import { apiFetch } from '../../lib/api-client';
 
+// Is folder ka page.tsx Next.js mein /track address banata hai.
 export default function TrackPetitionPage() {
+  // Search box, dhoondhne ki haalat, mila hua case aur error ko screen ke liye yaad rakhte hain.
+  // React mein yaad rakhi value badalne par React nayi value ke saath screen phir banata hai.
+  // TS mein <string> editor ko batata hai ki yahan seedha text rakhenge; JavaScript mein yeh mamooli text hi hai.
   const [lookupQuery, setLookupQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  // TS ka <any | null> yahan kisi bhi aakaar ka jawab ya abhi koi jawab na hone ko maan leta hai.
   const [searchResult, setSearchResult] = useState<any | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // TS mein React.FormEvent browser ke form-submit sandesh ka naam hai; yeh JavaScript ke event jaisa hi hai.
   const handleSearch = async (e: React.FormEvent) => {
+    // Browser ko form bhejne par page reload karne se rokte hain.
     e.preventDefault();
     if (!lookupQuery.trim()) return;
 
@@ -20,11 +27,13 @@ export default function TrackPetitionPage() {
     setSearchResult(null);
 
     try {
+      // Student ka ticket number ya receipt code server se dhoondhwate hain.
+      // TS ka <any> jawab ke fields ka naqsha tay nahi karta, isliye yahan server ka koi bhi object qabool hai.
       const res = await apiFetch<any>(`/api/tickets/track?key=${encodeURIComponent(lookupQuery.trim())}`);
       if (res.success && res.data) {
         setSearchResult(res.data);
       } else {
-        // Fallback demo result for testing before backend DB is seeded
+        // Server se record na mile to screen samjhane ke liye namoone ka result dikhate hain, asli complaint nahi.
         console.warn('Backend unavailable, showing verified demo petition:', res.error);
         setSearchResult({
           id: '550e8400-e29b-41d4-a716-446655440000',
@@ -46,6 +55,7 @@ export default function TrackPetitionPage() {
           ]
         });
       }
+    // TS ka any yahan pakki galti-shape maangne ke bajaay jo paighaam aaye woh padhne deta hai.
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to track petition');
     } finally {
@@ -72,6 +82,7 @@ export default function TrackPetitionPage() {
       {/* Search Input Box */}
       <form onSubmit={handleSearch} className="mx-auto max-w-2xl">
         <div className="relative flex items-center">
+          {/* value box mein yaad text dikhata hai; onChange React ko batata hai ki naya text kya hai. */}
           <input
             type="text"
             value={lookupQuery}
@@ -144,6 +155,7 @@ export default function TrackPetitionPage() {
               Append-Only Audit Trail ({searchResult.chainLength} Block Entries)
             </h3>
             <div className="space-y-2.5">
+              {/* React ka map history ka har row banata hai; key har kadam ko alag pehchaan deti hai. */}
               {searchResult.history.map((step: any, idx: number) => (
                 <div key={idx} className="flex items-start space-x-3 rounded-lg border border-slate-800 bg-slate-950/40 p-3 text-xs">
                   <div className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600/20 text-indigo-400 font-bold text-[10px]">

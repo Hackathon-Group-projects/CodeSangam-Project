@@ -4,9 +4,11 @@ import { AuditChainVerifier } from '../../components/audit-chain-verifier'; // B
 import { TransparencyCharts } from '../../components/transparency-charts'; // Browser mein banne wale charts ka hissa lete hain.
 
 // Next.js ko kehte hain ki is public page ki server copy har 60 second mein taaza ho.
+// Next.js is public page ke numbers ko zyada se zyada 60 second baad phir se mangwata hai.
 export const revalidate = 60;
 
 // Server ka pata environment mein diya ho to lete hain, warna local API istemal hoti hai.
+// NEXT_PUBLIC_ setting browser ko mil sakti hai, isliye yahan sirf server ka address rakha hai.
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 // TS mein yeh interface public numbers ka naksha hai; JavaScript mein yeh saamanya object hota.
@@ -34,6 +36,7 @@ async function getMetrics(): Promise<PublicMetrics | null> {
 }
 
 // Yeh server page pehle metrics mangwata hai, phir browser ko taiyar page deta hai.
+// Is folder ka page.tsx /transparency address banata hai; bina use client ke Next.js yeh page pehle parde ke peeche taiyaar karta hai.
 export default async function TransparencyPage() {
   const metrics = await getMetrics(); // Page dikhane se pehle public numbers laate hain.
   return <main className="space-y-7 py-3">

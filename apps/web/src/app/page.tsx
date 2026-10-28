@@ -1,4 +1,6 @@
+// Next.js app/page.tsx ko website ka pehla address, yani /, bana deta hai.
 export default function HomePage() {
+  // Pehla page project ka kaam samjhata hai aur complaint, tracking ke raaste dikhata hai.
   return (
     <div className="flex flex-col items-center justify-center space-y-12 py-10 text-center">
       {/* Hero Badge */}
