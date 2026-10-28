@@ -1,16 +1,21 @@
-'use client';
+'use client'; // Next.js ko batate hain ki menu login aur khulne/band hone par browser mein badlega.
 
 import React, { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import Link from 'next/link'; // Next ka Link pages ke beech jaane deta hai bina poori site dobara load kiye.
+import { usePathname } from 'next/navigation'; // Abhi khule address ko padhkar usi menu ko chuna hua dikhate hain.
 import { useAuth } from './auth-provider';
 import { ShieldCheck, Menu, X, LogOut, User, FileText, BarChart3, Search } from 'lucide-react';
 
 export function Navbar() {
+  // Login ki jaankari se pata lagate hain ki kaunse menu links dikhane hain.
   const { user, isAuthenticated, logout } = useAuth();
+  // Chhoti screen par menu khula hai ya band, yeh yaad rakhte hain.
+  // React ka useState menu khula hai ya band, yeh yaad rakhta hai aur button dabne par menu phir dikhata hai.
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Abhi ka page pata karke uske menu link ko chuna hua dikhate hain.
   const pathname = usePathname();
 
+  // Pehchante hain ki logged-in user officer ya staff group mein aata hai.
   const isOfficial = user && ['OFFICER_TIER_1', 'COMMITTEE_TIER_2', 'OMBUDSMAN_TIER_3', 'AUDITOR', 'ADMIN'].includes(user.role);
 
   return (
@@ -55,6 +60,7 @@ export function Navbar() {
             <span>Track Receipt</span>
           </Link>
 
+          {/* React ka ? : chunta hai ki login user ko uska menu mile ya login ke links. */}
           {isAuthenticated ? (
             <>
               {isOfficial ? (

@@ -1,24 +1,30 @@
-'use client';
+'use client'; // Next.js ko batate hain ki complaint list browser mein badalti rahegi.
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import Link from 'next/link'; // Next ka Link complaint pages par bina poori site reload kiye le jaata hai.
 import { useAuth } from '../../components/auth-provider';
 import { FilePlus, Clock, CheckCircle2, AlertTriangle, ArrowRight, Shield, ExternalLink, Filter } from 'lucide-react';
 import { apiFetch } from '../../lib/api-client';
 
+// Is folder ka page.tsx Next.js mein /dashboard address banata hai.
 export default function PetitionerDashboard() {
+  // Login ki yaad se user ka naam aur uski complaint list laane ka raasta milta hai.
   const { user, isAuthenticated } = useAuth();
+  // TS ka <any[]> JavaScript ki list jaisa hai, par yahan har complaint ka pakka naksha nahi diya gaya.
+  // React ki useState list yaad rakhti hai; setPetitions se nayi list aaye to complaint cards phir bante hain.
   const [petitions, setPetitions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Page pehli baar khulte hi user ki complaints server se mangwate hain.
     async function loadPetitions() {
       try {
         const res = await apiFetch<any[]>('/api/tickets/my-tickets');
         if (res.success && res.data) {
+          // Server se asli complaints aayi hon to wahi screen par rakhte hain.
           setPetitions(res.data);
         } else {
-          // Demo fallback seed petitions for instant UI testing
+          // Asli list na mile to screen dekhne ke liye sample complaints dikhate hain, yeh user ke asli records nahi hain.
           setPetitions([
             {
               id: 'ticket-demo-1',
@@ -63,6 +69,7 @@ export default function PetitionerDashboard() {
   }, []);
 
   const getStatusBadge = (status: string) => {
+    // Har complaint ki haalat ke liye alag rang ka chhota label chunte hain.
     switch (status) {
       case 'FILED':
         return <span className="rounded-full bg-blue-500/10 border border-blue-500/30 px-2.5 py-0.5 text-xs font-semibold text-blue-400">FILED</span>;
@@ -81,7 +88,7 @@ export default function PetitionerDashboard() {
 
   return (
     <div className="space-y-8 py-4">
-      {/* Welcome Banner */}
+      {/* User ka naam aur nayi complaint bharne ka raasta dikhate hain. */}
       <div className="flex flex-col justify-between gap-4 rounded-2xl border border-slate-800 bg-gradient-to-r from-slate-900 to-indigo-950/40 p-6 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
@@ -100,7 +107,7 @@ export default function PetitionerDashboard() {
         </Link>
       </div>
 
-      {/* Metrics Row */}
+      {/* Complaints ki kul, chalti, suljhi aur aage bheji ginti dikhate hain. */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
           <span className="text-xs font-medium text-slate-400">Total Petitions</span>
@@ -126,7 +133,7 @@ export default function PetitionerDashboard() {
         </div>
       </div>
 
-      {/* Petitions List Card */}
+      {/* User ki complaint list ya khaali list ka paighaam dikhate hain. */}
       <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl">
         <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
           <h2 className="text-lg font-bold text-white">Your Grievances & Appeals</h2>
@@ -146,6 +153,7 @@ export default function PetitionerDashboard() {
           </div>
         ) : (
           <div className="divide-y divide-slate-800/80">
+            {/* React ka map har ticket ka card banata hai; key React ko har card ki alag pehchaan deti hai. */}
             {petitions.map((ticket) => (
               <div key={ticket.id} className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="space-y-1">

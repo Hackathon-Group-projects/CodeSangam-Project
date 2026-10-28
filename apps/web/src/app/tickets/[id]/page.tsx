@@ -1,7 +1,7 @@
-'use client'; // Dynamic petition tracking & 72-hour dispute view
+'use client'; // Next.js ko batate hain ki yeh ticket screen browser mein chalti hai, kyunki ismein hooks aur buttons hain.
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation'; // Next se address ka ticket code padhte aur code se page badalte hain.
 import { Status, Category, Priority } from '@vishanti/shared';
 import { StatusStepper } from '../../../components/status-stepper';
 import { DisputeWidget } from '../../../components/dispute-widget';
@@ -18,7 +18,7 @@ import {
   CheckCircle2,
   Hash,
 } from 'lucide-react';
-import Link from 'next/link';
+import Link from 'next/link'; // Next ka Link doosre page par jaata hai bina poori site dobara load kiye.
 
 // TS CONCEPT (interface TicketDetail):
 // Database se aane wale pure ticket object ka blueprint
@@ -48,10 +48,13 @@ interface TicketDetail {
 }
 
 export default function TicketDetailsPage() {
+  // [id] folder Next.js ko batata hai ki is address ke is hisse mein har ticket ka alag code aa sakta hai.
+  // Isliye /tickets/123 aur /tickets/456 dono isi page ko kholte hain.
   const params = useParams();                  // URL parameter (/tickets/:id) se ID nikalne ka hook
-  const router = useRouter();                  // Navigation helper
+  const router = useRouter();                  // Next.js ka page badalne wala auzaar lete hain.
   const ticketId = params.id as string;        // TS CONCEPT (as string): TypeScript ko confirm kar rahe hain ki id ek string hai
 
+  // React ki useState complaint ya khaali value yaad rakhti hai; nayi complaint aate hi details phir dikhati hai.
   const [ticket, setTicket] = useState<TicketDetail | null>(null); // Ticket ka data store karne ke liye
   const [isLoading, setIsLoading] = useState(true);                 // Loading spinner
 
@@ -142,6 +145,7 @@ export default function TicketDetailsPage() {
   };
 
   // Page khulte hi ya ticket ID change hone par loadTicket() chalega
+  // React ka useEffect page khulne ya ticket code badalne ke baad nayi details mangwata hai.
   useEffect(() => {
     loadTicket();
   }, [ticketId]);

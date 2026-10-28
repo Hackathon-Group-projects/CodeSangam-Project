@@ -1,7 +1,7 @@
 services:
   # PostgreSQL 16 with pgvector extension (Audit trail & Vector Embeddings)
   postgres:
-    image: pgvector/pgvector:pg16
+    image: pgvector/pgvector:pg16-bookworm # Apple silicon ke liye ARM64 sahit multi-arch PostgreSQL image use hoti hai.
     container_name: vishanti-postgres
     restart: unless-stopped
     environment:
@@ -52,7 +52,7 @@ services:
 
   # ClamAV Antivirus Daemon (Attachment virus scan before verification)
   clamav:
-    image: clamav/clamav:stable_base
+    image: clamav/clamav-debian:stable_base # Debian wala official ClamAV image Apple silicon ARM64 ko support karta hai.
     container_name: vishanti-clamav
     restart: unless-stopped
     ports:

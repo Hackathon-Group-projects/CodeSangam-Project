@@ -1,4 +1,4 @@
-'use client'; // Client-side 72h dispute countdown & modal
+'use client'; // Next.js ko batate hain ki ghadi aur aitraaz ka popup browser mein badalta rahega.
 
 import React, { useState, useEffect } from 'react';
 import { DISPUTE_WINDOW_MS } from '@vishanti/shared';
@@ -22,6 +22,7 @@ export function DisputeWidget({
   isAnonymous,
   onDisputeSuccess,
 }: DisputeWidgetProps) {
+  // React ka useState countdown aur form ke jawab yaad rakhta hai; nayi value aate hi screen taaza hoti hai.
   // resolvedTime: Jis waqt officer ne ticket close kiya (fallback demo ke liye 4 hours pehle)
   const resolvedTime = resolvedAt 
     ? new Date(resolvedAt).getTime() 
@@ -34,7 +35,7 @@ export function DisputeWidget({
   const [isSubmitting, setIsSubmitting] = useState(false);             // API call in progress
   const [errorMsg, setErrorMsg] = useState<string | null>(null);       // Error message
 
-  // useEffect: Har 1 second (1000ms) me countdown timer ko recalculate karta hai
+  // React ka useEffect pehli screen ke baad timer shuru karta hai aur hissa band hote hi use saaf karta hai.
   useEffect(() => {
     const calculateRemaining = () => {
       const deadline = resolvedTime + DISPUTE_WINDOW_MS; // Resolution time + 72 ghante

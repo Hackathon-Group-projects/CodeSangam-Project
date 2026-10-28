@@ -1,6 +1,7 @@
 import { computeFileSHA256 } from './crypto';
 import { AttachmentMeta } from '@vishanti/shared';
 
+// Next.js mein NEXT_PUBLIC_ wali setting browser tak ja sakti hai; yahan koi password nahi, sirf server ka address hai.
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 // TS CONCEPT (interface for callback): Upload progress batane wala function ka signature

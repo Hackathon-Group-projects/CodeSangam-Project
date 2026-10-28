@@ -9,20 +9,25 @@ import { RegisterSchema, RegisterInput, RoleEnum } from '@vishanti/shared';
 import { apiFetch } from '../../../lib/api-client';
 import { UserPlus, Mail, Lock, User, Building, AlertCircle, CheckCircle2 } from 'lucide-react';
 
+// functions renders the register page
 export default function RegisterPage() {
+  // useRouter() ek React Hook hai. Isliye ise component ke andar use karna hota hai. Next.js App Router mein import hota hai
   const router = useRouter();
+
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // userForm<RegisterInput> se input lete hai aur 
   const {
     register,
     handleSubmit,
     watch,
     formState: { errors },
-  } = useForm<RegisterInput>({
+  } = useForm<RegisterInput>({ 
+    // React Hook Form ko bolo: "Validation ke liye Zod ka RegisterSchema use karo"
     resolver: zodResolver(RegisterSchema),
-    defaultValues: {
+    defaultValues: { // these are default values
       name: '',
       email: '',
       password: '',
@@ -31,41 +36,51 @@ export default function RegisterPage() {
     },
   });
 
+  // watch chune hue role ko dekhta rehta hai; role badle to department box bhi apne aap badalta hai.
   const selectedRole = watch('role');
+  // Agar chuna hua role student ka nahi hai to department ka box dikhana hai.
   const isOfficialRole = selectedRole !== 'PETITIONER';
 
+  // Form jama hone par server se account banwate hain aur jawab dikhate hain.
   const onSubmit = async (data: RegisterInput) => {
     setIsSubmitting(true);
     setServerError(null);
     setSuccessMessage(null);
 
     try {
+      // Form ki jaankari ko server tak bhejte hain.
+      // TS ka <any> server ke jawab ka fixed naqsha nahi batata; JavaScript mein yeh wahi milaa hua jawab hai.
       const res = await apiFetch<any>('/api/auth/register', {
         method: 'POST',
         body: JSON.stringify(data),
       });
 
       if (res.success) {
+        // Asli account bane to chhota message dikhakar login par le jaate hain.
         setSuccessMessage('Account registered successfully! Redirecting to login...');
         setTimeout(() => {
-          router.push('/auth/login');
+          router.push('/auth/login'); // navigate to login page after 1500 ms delay
         }, 1500);
       } else {
-        // Fallback simulated success for local frontend development
+        // Server se account na bane to demo screen ke liye nakli safalta dikhate hain, asli account nahi banta.
         console.warn('Backend unavailable, mock registering:', res.error);
         setSuccessMessage('Demo Account Registered! Redirecting to login...');
         setTimeout(() => {
           router.push('/auth/login');
         }, 1200);
       }
+    // error can be of any type
     } catch (err: any) {
+      // Bhejne mein koi dikkat aaye to uska message form ke upar dikhate hain.
       setServerError(err.message || 'Registration failed. Please try again.');
     } finally {
+      // Kaam khatam hone par button ko phir se dabane laayak karte hain.
+      // finally almost hmesha execute hota hai
       setIsSubmitting(false);
     }
   };
 
-  return (
+  return ( // returning the page component 
     <div className="mx-auto flex w-full max-w-md flex-col justify-center space-y-6 pt-4 pb-12">
       <div className="space-y-2 text-center">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400">
@@ -94,8 +109,9 @@ export default function RegisterPage() {
           </div>
         )}
 
+        {/* React ka onSubmit form bhejne par hamara onSubmit kaam chalata hai, bina page reload kiye. */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Name */}
+            {/* Naam bharne ka box dikhate hain. */}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-slate-300">Full Name</label>
             <div className="relative">
@@ -114,7 +130,7 @@ export default function RegisterPage() {
             {errors.name && <p className="text-xs text-rose-400">{errors.name.message}</p>}
           </div>
 
-          {/* Email */}
+            {/* Email bharne ka box dikhate hain. */}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-slate-300">Institutional Email</label>
             <div className="relative">
@@ -133,7 +149,7 @@ export default function RegisterPage() {
             {errors.email && <p className="text-xs text-rose-400">{errors.email.message}</p>}
           </div>
 
-          {/* Password */}
+            {/* Password bharne ka box dikhate hain. */}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-slate-300">Password</label>
             <div className="relative">

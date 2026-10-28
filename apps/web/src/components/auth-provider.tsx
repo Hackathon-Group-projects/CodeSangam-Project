@@ -1,4 +1,4 @@
-'use client'; // Next.js ko batata hai ki ye component browser me chalega (server par nahi), kyunki yahan localStorage use ho raha hai
+'use client'; // Next.js ko batate hain ki login yaad rakhne wala hissa browser mein chalega, kyunki wahi localStorage sambhalta hai.
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Role } from '@vishanti/shared';
@@ -24,7 +24,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
 }
 
-// React Context create karte hain jo pure app me user state ko globally share karega
+// React Context ko common notice-board jaisa samjho: Provider ke andar ke sab pages yahan ki login jaankari padh sakte hain.
 const AuthContext = createContext<AuthContextType>({
   user: null,
   token: null,
@@ -36,11 +36,12 @@ const AuthContext = createContext<AuthContextType>({
 
 // AuthProvider Component: Yeh pure website ko wrap karta hai taaki har page ko login info mile
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  // React ka useState value yaad rakhta hai; set karne par React un pages ko phir dikhata hai jo is value ko padhte hain.
   const [user, setUser] = useState<UserSession | null>(null);       // Current user ka data
   const [token, setToken] = useState<string | null>(null);          // JWT auth token
   const [isLoading, setIsLoading] = useState(true);                 // Initial session check loading indicator
 
-  // useEffect: Page refresh hone par ek baar chalta hai, aur localStorage se saved login restore karta hai
+  // React ka useEffect screen pehli baar banne ke baad chalta hai; [] ka matlab is kaam ko bas ek baar karna.
   useEffect(() => {
     try {
       const storedToken = localStorage.getItem('vishanti_auth_token');
@@ -73,6 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.location.href = '/';
   };
 
+  // Provider apne andar ke sab pages ko ek hi user, login receipt aur login/logout ka saanjha set deta hai.
   return (
     <AuthContext.Provider
       value={{
@@ -89,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Custom Hook: Kisi bhi component me bas `const { user, logout } = useAuth()` likh kar session use kar sakte hain
+// useAuth ek chhota darwaza hai jisse koi bhi andar ka page saanjhi login jaankari padh sakta hai.
 export function useAuth() {
   return useContext(AuthContext);
 }

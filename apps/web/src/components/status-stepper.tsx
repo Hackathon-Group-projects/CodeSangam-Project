@@ -1,4 +1,4 @@
-'use client'; // Client-side visual state machine stepper
+'use client'; // Next.js ko batate hain ki yeh status dikhane wala tukda browser mein chalega.
 
 import React from 'react';
 import { Status } from '@vishanti/shared';
@@ -27,6 +27,7 @@ const STEPS: StepConfig[] = [
 ];
 
 export function StatusStepper({ currentStatus, currentTier }: StatusStepperProps) {
+  // Parent screen se mile status aur darje ko props kehte hain; yeh chhota hissa unke mutabik progress dikhata hai.
   // Check karte hain ki ticket escalate hua hai ya normal flow me hai
   const isEscalated = currentStatus === 'ESCALATED';
 
@@ -95,6 +96,7 @@ export function StatusStepper({ currentStatus, currentTier }: StatusStepperProps
       {/* Stepper Progress Bar: 4 stages ko map loop se render karte hain */}
       <div className="relative pt-2">
         <div className="grid grid-cols-4 gap-2">
+          {/* React ka map har stage ka nishaan banata hai; key har nishaan ko alag pehchaan deti hai. */}
           {STEPS.map((step, idx) => {
             const isCompleted = idx < activeIndex || (idx === 3 && currentStatus === 'RESOLVED');
             const isCurrent = idx === activeIndex && !isEscalated;

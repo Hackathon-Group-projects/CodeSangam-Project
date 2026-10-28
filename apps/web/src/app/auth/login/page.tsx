@@ -1,8 +1,8 @@
-'use client';
+'use client'; // Next.js ko batate hain ki email box, button aur login kaam browser mein chalenge.
 
 import React, { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link'; // Next ka Link page badalta hai bina poori site dobara load kiye.
+import { useRouter } from 'next/navigation'; // Button ke baad code se naya page kholne ka rasta lete hain.
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { LoginSchema, LoginInput } from '@vishanti/shared';
@@ -10,19 +10,26 @@ import { useAuth } from '../../../components/auth-provider';
 import { apiFetch } from '../../../lib/api-client';
 import { Shield, Lock, Mail, AlertCircle, ArrowRight, UserCheck, ShieldAlert } from 'lucide-react';
 
+// Is folder ka page.tsx Next.js mein /auth/login address banata hai.
 export default function LoginPage() {
-  const router = useRouter();                                               // Page navigation helper
-  const { login } = useAuth();                                              // Global auth context se login function
-  const [activeTab, setActiveTab] = useState<'PETITIONER' | 'OFFICIAL'>('PETITIONER'); // Active login tab (Student vs Officer)
-  const [serverError, setServerError] = useState<string | null>(null);      // Server error message
-  const [isSubmitting, setIsSubmitting] = useState(false);                  // Login button loading state
 
-  // React Hook Form: Login fields (email, password) ka state aur validation Zod ke LoginSchema se handle karta hai
+
+  const router = useRouter(); // Login ke baad agla page kholne ka rasta lete hain.
+  const { login } = useAuth(); // Login ki jaankari ko website ke baaki pages tak pahunchane wala function lete hain.
+
+  // TS ka 'A' | 'B' JavaScript ke liye editor ki rok hai: is jagah bas in dono naam mein se ek hi aa sakta hai.
+  const [activeTab, setActiveTab] = useState<'PETITIONER' | 'OFFICIAL'>('PETITIONER'); 
+
+  const [serverError, setServerError] = useState<string | null>(null); 
+  const [isSubmitting, setIsSubmitting] = useState(false); // Login bhejte waqt button ko busy dikhate hain.
+
+  // useForm input aur galtiyon ko sambhalta hai; TS ka <LoginInput> editor ko email/password ka naksha deta hai.
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<LoginInput>({
+    // TS ka <LoginInput> form ke fields ka naksha batata hai; zodResolver un fields ke niyam check karta hai.
     resolver: zodResolver(LoginSchema),
     defaultValues: {
       email: '',
@@ -32,10 +39,13 @@ export default function LoginPage() {
 
   // onSubmit: Credentials ko Fastify backend /api/auth/login me bhejta hai
   const onSubmit = async (data: LoginInput) => {
+    // Submit dabte hi purana error hata kar button ko busy dikhate hain.
     setIsSubmitting(true);
     setServerError(null);
 
     try {
+      // Email aur password server ko bhej kar asli login receipt maangte hain.
+      // TS ka <any> editor ko jawab ka pakka naksha nahi deta; JavaScript mein jawab phir bhi aam object hi hota hai.
       const res = await apiFetch<any>('/api/auth/login', {
         method: 'POST',
         body: JSON.stringify({
@@ -45,16 +55,17 @@ export default function LoginPage() {
       });
 
       if (res.success && res.data?.token) {
-        login(res.data.token, res.data.user); // Token save karo
+        // Asli receipt sambhal kar user ko uski apni screen par bhejte hain.
+        login(res.data.token, res.data.user); // Asli login receipt aur user ki jaankari yaad rakhte hain.
         if (activeTab === 'OFFICIAL') {
-          router.push('/officer/dashboard');
+          router.push('/officer/dashboard'); // Officer ko uski kaam wali screen par le jaate hain.
         } else {
-          router.push('/dashboard');
+          router.push('/dashboard'); // Student ko uski complaint wali screen par le jaate hain.
         }
       } else {
-        // Fallback for development if Kashvi's backend is not running yet
-        // Allows Harsh to test the frontend UI immediately!
+        // Server ka asli jawab na aaye to sirf screen dekhne ke liye nakli demo login banate hain.
         console.warn('Backend unavailable, activating local dev mock session:', res.error);
+        // Nakli user ka object sirf demo screen kholne ke liye banate hain.
         const mockUser = {
           id: 'dev_user_123',
           name: data.email.split('@')[0],
@@ -62,6 +73,7 @@ export default function LoginPage() {
           role: activeTab === 'OFFICIAL' ? 'OFFICER_TIER_1' : 'PETITIONER',
           department: activeTab === 'OFFICIAL' ? 'Academic Affairs' : undefined,
         };
+        // TS ka 'as any' editor ki jaanch ko is ek jagah dheela karta hai; JavaScript mein yeh wahi user object rehta hai.
         login('mock_jwt_token_for_dev_mode', mockUser as any);
         
         if (activeTab === 'OFFICIAL') {
@@ -70,9 +82,12 @@ export default function LoginPage() {
           router.push('/dashboard');
         }
       }
+    // TS ka any yahan galti ke paighaam ka roop pehle se pakka nahi karta.
     } catch (err: any) {
+      // Bhejne mein dikkat aaye to uska saada paighaam screen par rakhte hain.
       setServerError(err.message || 'Authentication failed. Please check credentials.');
     } finally {
+      // Jawab aane ke baad button ko phir se istemal ke laayak karte hain.
       setIsSubmitting(false);
     }
   };
@@ -129,6 +144,7 @@ export default function LoginPage() {
           </div>
         )}
 
+        {/* React ka onSubmit form bhejne par hamara onSubmit kaam chalata hai, bina page reload kiye. */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Email field */}
           <div className="space-y-1.5">

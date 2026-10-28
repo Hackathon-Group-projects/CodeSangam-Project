@@ -1,4 +1,4 @@
-'use client'; // Client-side cryptographic audit chain feed & comment poster
+'use client'; // Next.js ko batate hain ki comment likhna aur history kholna browser mein hoga.
 
 import React, { useState } from 'react';
 import { apiFetch } from '../lib/api-client';
@@ -42,6 +42,7 @@ interface AuditTimelineProps {
 }
 
 export function AuditTimeline({ ticketId, entries, onCommentAdded }: AuditTimelineProps) {
+  // React ke useState se input aur khulne/band hone ki value yaad rehti hai; badalne par yeh hissa phir dikhaya jata hai.
   const [commentText, setCommentText] = useState('');                                   // Naye comment ka text input
   const [isPosting, setIsPosting] = useState(false);                                     // Comment posting loading state
   const [copiedHash, setCopiedHash] = useState<string | null>(null);                     // Copy hone par tick icon dikhane ke liye
@@ -49,6 +50,7 @@ export function AuditTimeline({ ticketId, entries, onCommentAdded }: AuditTimeli
 
   // togglePayload: Block ka raw JSON view expand/collapse karta hai
   const togglePayload = (seq: number) => {
+    // Pichhli list se copy banakar sirf chune hue record ka khula/band nishaan ulat dete hain.
     setExpandedPayloads((prev) => ({ ...prev, [seq]: !prev[seq] }));
   };
 
@@ -130,6 +132,7 @@ export function AuditTimeline({ ticketId, entries, onCommentAdded }: AuditTimeli
 
       {/* Vertical Timeline */}
       <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-800">
+        {/* React ka map har history entry ka row banata hai; key har row ko alag pehchaan deti hai. */}
         {entries.map((entry) => {
           const isExpanded = !!expandedPayloads[entry.seq];
 

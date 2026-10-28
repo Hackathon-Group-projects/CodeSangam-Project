@@ -1,4 +1,4 @@
-'use client'; // Recharts browser mein SVG tasveer banata hai, isliye yeh hissa browser par chalayenge.
+'use client'; // Next.js ko batate hain ki charts browser mein banenge, jahan numbers ki tasveer dikhai jaati hai.
 
 import type { ReactNode } from 'react'; // TS ko batate hain ki chart card ke andar doosra React visual aa sakta hai.
 import { CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, BarChart, Bar } from 'recharts'; // Public numbers ko column charts mein dikhane ke parts lete hain.
@@ -11,6 +11,7 @@ type TransparencyChartProps = {
 
 // Dono charts ko chhote aur bade screen ke hisaab se dikhate hain.
 export function TransparencyCharts({ resolutionVelocity, categoryTrends }: TransparencyChartProps) { // TS check karta hai ki dono lists sahi shape mein aayi hain.
+  // Parent page numbers ki do lists props ke roop mein deta hai; yeh hissa unhe charts mein dikhata hai.
   return <section className="grid gap-5 lg:grid-cols-2"> {/* Phone par ek chart aur bade screen par do chart paas-paas rakhte hain. */}
     <ChartCard title="Average resolution time by tier" subtitle="Hours from filing to resolution"> {/* Pehla chart har tier ka ausat samay dikhata hai. */}
       <ResponsiveContainer width="100%" height="100%">
