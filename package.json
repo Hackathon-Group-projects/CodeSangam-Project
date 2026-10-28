@@ -14,6 +14,7 @@
     "dev:worker": "npm run dev --workspace=@vishanti/worker",
     "test:e2e": "npm run test:e2e --workspace=@vishanti/web",
     "test:e2e:report": "npm run test:e2e:report --workspace=@vishanti/web",
+    "prebuild": "npm run prisma:generate --workspace=@vishanti/db",
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present"
@@ -35,5 +36,8 @@
   },
   "devDependencies": {
     "prisma": "5.22.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0"
   }
 }
