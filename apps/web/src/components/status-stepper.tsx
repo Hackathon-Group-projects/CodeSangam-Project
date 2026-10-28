@@ -1,20 +1,24 @@
-'use client';
+'use client'; // Client-side visual state machine stepper
 
 import React from 'react';
 import { Status } from '@vishanti/shared';
 import { Check, Clock, AlertTriangle, ShieldAlert, Sparkles, FileText, UserCheck, Search } from 'lucide-react';
 
+// TS CONCEPT (interface StatusStepperProps):
+// Stepper ko ticket ka status aur tier pata hona chahiye UI render karne ke liye
 interface StatusStepperProps {
-  currentStatus: Status;
-  currentTier: number; // 1 = Officer, 2 = Committee, 3 = Ombudsman
+  currentStatus: Status; // 'FILED' | 'ASSIGNED' | 'IN_REVIEW' | 'RESOLVED' | 'ESCALATED'
+  currentTier: number;   // 1 = Officer, 2 = Committee, 3 = Ombudsman
 }
 
+// TS CONCEPT (interface StepConfig): Har step ka data structure (status, heading, sub-heading)
 interface StepConfig {
   status: Status;
   label: string;
   subLabel: string;
 }
 
+// Progress bar ke 4 continuous linear stages
 const STEPS: StepConfig[] = [
   { status: 'FILED', label: 'Filed', subLabel: 'Genesis Seq #0' },
   { status: 'ASSIGNED', label: 'Assigned', subLabel: 'AI Triage Routed' },
@@ -23,22 +27,24 @@ const STEPS: StepConfig[] = [
 ];
 
 export function StatusStepper({ currentStatus, currentTier }: StatusStepperProps) {
+  // Check karte hain ki ticket escalate hua hai ya normal flow me hai
   const isEscalated = currentStatus === 'ESCALATED';
 
-  // Get current step index for linear progression
+  // getStepIndex: Status ke hisaab se progress bar ka active index (0 to 3) nikalta hai
   const getStepIndex = (status: Status) => {
     switch (status) {
       case 'FILED': return 0;
       case 'ASSIGNED': return 1;
       case 'IN_REVIEW': return 2;
       case 'RESOLVED': return 3;
-      case 'ESCALATED': return 2; // Branches out of in review / assigned
+      case 'ESCALATED': return 2; // Escalated state IN_REVIEW stage se branch-out hoti hai
       default: return 0;
     }
   };
 
   const activeIndex = getStepIndex(currentStatus);
 
+  // getTierLabel: Authority tier number ko readable department title me map karta hai
   const getTierLabel = (tier: number) => {
     switch (tier) {
       case 1: return 'Tier 1: Redressal Officer';
@@ -86,7 +92,7 @@ export function StatusStepper({ currentStatus, currentTier }: StatusStepperProps
         )}
       </div>
 
-      {/* Stepper Progress Bar */}
+      {/* Stepper Progress Bar: 4 stages ko map loop se render karte hain */}
       <div className="relative pt-2">
         <div className="grid grid-cols-4 gap-2">
           {STEPS.map((step, idx) => {
@@ -131,7 +137,7 @@ export function StatusStepper({ currentStatus, currentTier }: StatusStepperProps
           })}
         </div>
 
-        {/* Escalated Callout Branch (if status is ESCALATED) */}
+        {/* Escalated Callout Branch (agar ticket escalate hua hai toh alert dikhate hain) */}
         {isEscalated && (
           <div className="mt-6 rounded-xl border border-rose-500/30 bg-rose-950/20 p-4">
             <div className="flex items-start space-x-3">

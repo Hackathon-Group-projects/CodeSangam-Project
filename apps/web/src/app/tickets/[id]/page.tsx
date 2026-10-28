@@ -1,4 +1,4 @@
-'use client';
+'use client'; // Dynamic petition tracking & 72-hour dispute view
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -20,6 +20,9 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
+// TS CONCEPT (interface TicketDetail):
+// Database se aane wale pure ticket object ka blueprint
+// Jisme metadata, attachments array, aur audit blocks ki array shamil hai
 interface TicketDetail {
   id: string;
   title: string;
@@ -45,14 +48,14 @@ interface TicketDetail {
 }
 
 export default function TicketDetailsPage() {
-  const params = useParams();
-  const router = useRouter();
-  const ticketId = params.id as string;
+  const params = useParams();                  // URL parameter (/tickets/:id) se ID nikalne ka hook
+  const router = useRouter();                  // Navigation helper
+  const ticketId = params.id as string;        // TS CONCEPT (as string): TypeScript ko confirm kar rahe hain ki id ek string hai
 
-  const [ticket, setTicket] = useState<TicketDetail | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [ticket, setTicket] = useState<TicketDetail | null>(null); // Ticket ka data store karne ke liye
+  const [isLoading, setIsLoading] = useState(true);                 // Loading spinner
 
-  // Load ticket details from API or local simulated seed
+  // loadTicket: Backend API `/api/tickets/:id` se ticket aur audit chain load karta hai
   const loadTicket = async () => {
     setIsLoading(true);
     try {
@@ -61,6 +64,7 @@ export default function TicketDetailsPage() {
         setTicket(res.data);
       } else {
         // Fallback rich simulation data for immediate frontend testing & judge demo
+        // Agar backend offline hai, toh demo data load hota hai taaki testing block na ho
         console.warn('Backend unavailable, activating interactive demo ticket for:', ticketId);
         setTicket({
           id: ticketId,
@@ -137,11 +141,13 @@ export default function TicketDetailsPage() {
     }
   };
 
+  // Page khulte hi ya ticket ID change hone par loadTicket() chalega
   useEffect(() => {
     loadTicket();
   }, [ticketId]);
 
-  // Handler when petitioner disputes the resolution
+  // handleDisputeSuccess: Jab petitioner dispute contest karta hai:
+  // Status turant ESCALATED ho jata hai, Tier level 1 se 2 ho jata hai, aur timeline me naya block jud jata hai
   const handleDisputeSuccess = () => {
     if (!ticket) return;
 
@@ -161,12 +167,12 @@ export default function TicketDetailsPage() {
     setTicket({
       ...ticket,
       status: 'ESCALATED',
-      currentTier: ticket.currentTier + 1,
+      currentTier: ticket.currentTier + 1, // Tier 1 (Officer) -> Tier 2 (Committee)
       auditTrail: [...ticket.auditTrail, newEntry],
     });
   };
 
-  // Handler when petitioner posts a comment
+  // handleCommentAdded: Naya comment add hone par audit trail array me block append karta hai
   const handleCommentAdded = () => {
     if (!ticket) return;
     const newSeq = ticket.auditTrail.length;
@@ -186,6 +192,7 @@ export default function TicketDetailsPage() {
     });
   };
 
+  // Loading spinner agar data fetch ho raha hai
   if (isLoading || !ticket) {
     return (
       <div className="flex h-96 items-center justify-center text-sm text-slate-400">
@@ -213,13 +220,13 @@ export default function TicketDetailsPage() {
         </div>
       </div>
 
-      {/* 1. Visual Lifecycle Stepper Component */}
+      {/* 1. Visual Lifecycle Stepper Component: Filed -> Assigned -> In Review -> Resolved */}
       <StatusStepper
         currentStatus={ticket.status}
         currentTier={ticket.currentTier}
       />
 
-      {/* 2. 72-Hour Dispute Window Widget (Active if status is RESOLVED) */}
+      {/* 2. 72-Hour Dispute Window Widget (Sirf tabhi render hoga jab status RESOLVED ho) */}
       {ticket.status === 'RESOLVED' && (
         <DisputeWidget
           ticketId={ticket.id}
@@ -261,7 +268,7 @@ export default function TicketDetailsPage() {
           </p>
         </div>
 
-        {/* Evidence Attachments */}
+        {/* Evidence Attachments with SHA-256 hashes */}
         {ticket.attachments && ticket.attachments.length > 0 && (
           <div className="border-t border-slate-800/80 pt-4 space-y-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 block">

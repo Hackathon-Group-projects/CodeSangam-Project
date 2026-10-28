@@ -11,12 +11,13 @@ import { apiFetch } from '../../../lib/api-client';
 import { Shield, Lock, Mail, AlertCircle, ArrowRight, UserCheck, ShieldAlert } from 'lucide-react';
 
 export default function LoginPage() {
-  const router = useRouter();
-  const { login } = useAuth();
-  const [activeTab, setActiveTab] = useState<'PETITIONER' | 'OFFICIAL'>('PETITIONER');
-  const [serverError, setServerError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();                                               // Page navigation helper
+  const { login } = useAuth();                                              // Global auth context se login function
+  const [activeTab, setActiveTab] = useState<'PETITIONER' | 'OFFICIAL'>('PETITIONER'); // Active login tab (Student vs Officer)
+  const [serverError, setServerError] = useState<string | null>(null);      // Server error message
+  const [isSubmitting, setIsSubmitting] = useState(false);                  // Login button loading state
 
+  // React Hook Form: Login fields (email, password) ka state aur validation Zod ke LoginSchema se handle karta hai
   const {
     register,
     handleSubmit,
@@ -29,6 +30,7 @@ export default function LoginPage() {
     },
   });
 
+  // onSubmit: Credentials ko Fastify backend /api/auth/login me bhejta hai
   const onSubmit = async (data: LoginInput) => {
     setIsSubmitting(true);
     setServerError(null);
@@ -43,7 +45,7 @@ export default function LoginPage() {
       });
 
       if (res.success && res.data?.token) {
-        login(res.data.token, res.data.user);
+        login(res.data.token, res.data.user); // Token save karo
         if (activeTab === 'OFFICIAL') {
           router.push('/officer/dashboard');
         } else {
