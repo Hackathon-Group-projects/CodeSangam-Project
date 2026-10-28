@@ -79,11 +79,26 @@ The API accepts `WEB_ORIGIN` to set the browser origin allowed by CORS. For loca
 
 The MinIO console credentials are `MINIO_ROOT_USER` and `MINIO_ROOT_PASSWORD` from `.env`.
 
+## Phase 3 API endpoints and live events
+
+- `PATCH /api/tickets/:id/transition` moves a ticket through a permitted staff transition. Send a bearer token and `Idempotency-Key`. Resolving a ticket requires a resolution note.
+- `POST /api/tickets/:id/comments` adds a public or staff-only comment as an append-only audit entry. Signed-in petitioners can comment on their own account tickets; staff must match the ticket tier. For an anonymous ticket, send its receipt in the `X-Receipt-Secret` header. Internal comments are staff-only.
+- `POST /api/tickets/:id/dispute` lets the ticket owner dispute a resolution within 72 hours. Signed-in petitioners use their bearer token; anonymous petitioners include the `receiptSecret` in the request body.
+
+Status changes and comments are written in a PostgreSQL transaction after locking the ticket row with `SELECT ... FOR UPDATE`. Each action appends the next SHA-256 audit entry. Disputes move the ticket to the next authority tier and set a new SLA deadline from `SlaPolicy`, falling back to the shared priority defaults if no matching policy is configured.
+
+Socket.IO uses the Redis adapter and accepts either a JWT or an anonymous receipt at connection time. A connected client can request an authorized ticket room by emitting `ticket:join` with `{ "ticketId": "<uuid>" }`; it can leave with `ticket:leave`. The server emits `ticket:updated` for status changes and disputes, and `ticket:commented` for comments. Internal comment events are sent only to the staff room.
+
+The existing officer dashboard can use the compatibility event `ticket:subscribe` and listens for `ticket-updated`; both map to the same authorized ticket room and update data.
+
+Read-only ticket detail, audit, comment-list, tracking, and officer-queue endpoints remain part of the separate read-layer work. This backend change provides the write routes and live notification contract described above.
+
 ## Useful commands
 
 ```sh
 npm run build
 npm run lint
+npm test
 npm run prisma:studio --workspace=@vishanti/db
 docker compose ps
 docker compose logs -f postgres redis minio clamav
@@ -91,6 +106,8 @@ docker compose down
 ```
 
 The root `npm run build` command first generates Prisma Client, then builds the API, web app, and worker. You can also generate the database client on its own with the command in step 5.
+
+The API integration tests create a uniquely named temporary PostgreSQL database, apply the migrations, exercise the HTTP and Socket.IO flows, verify ticket creation replay and audit hashes, run concurrent-transition and audit-permission checks, and drop that database afterward. They require the local PostgreSQL and Redis services plus the configured `app_user` and migration-role URLs.
 
 `docker compose down` stops the services and keeps their named data volumes. `docker compose down -v` deletes the local database, Redis data, and uploaded objects; use it only when you intend to erase that local data.
 

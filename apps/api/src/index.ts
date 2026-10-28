@@ -4,10 +4,12 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import { registerAuthRoutes } from './auth/routes';
 import { registerTicketRoutes } from './routes/tickets';
+import { registerTicketActionRoutes } from './routes/ticket-actions';
 import { ApiError } from './errors';
 import { prisma } from './db';
 import { redis } from './redis';
 import { config } from './config';
+import { startNotificationHub, stopNotificationHub } from './services/notifications';
 
 const fastify = Fastify({
   logger: {
@@ -70,8 +72,10 @@ async function main(): Promise<void> {
 
   await registerAuthRoutes(fastify);
   await registerTicketRoutes(fastify);
+  await registerTicketActionRoutes(fastify);
 
   fastify.addHook('onClose', async () => {
+    await stopNotificationHub();
     redis.disconnect();
     await prisma.$disconnect();
   });
@@ -79,12 +83,14 @@ async function main(): Promise<void> {
   await prisma.$connect();
   await redis.connect();
   await redis.ping();
+  await startNotificationHub(fastify.server);
   await fastify.listen({ port: config.port, host: '0.0.0.0' });
   fastify.log.info(`Vishanti API running on http://localhost:${config.port}`);
 }
 
 main().catch(async (error: unknown) => {
   fastify.log.error({ err: error }, 'API startup failed');
+  await stopNotificationHub().catch(() => undefined);
   redis.disconnect();
   await prisma.$disconnect().catch(() => undefined);
   process.exit(1);

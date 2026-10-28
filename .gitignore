@@ -60,5 +60,6 @@ secrets/
 # Testing & Coverage
 coverage/
 .nyc_output/
+.vitest/
 playwright-report/
 test-results/
