@@ -50,6 +50,9 @@ function GrievanceIntakeContent() {
     }
   }, [searchParams]);
 
+  // useForm: React Hook Form initialize karte hain
+  // TS CONCEPT (<CreateTicketInput>): Form ka data wahi hoga jo CreateTicketSchema me define hai
+  // zodResolver: User ke har keystroke par Zod schema se validation check karta hai
   const {
     register,
     handleSubmit,
@@ -71,7 +74,9 @@ function GrievanceIntakeContent() {
   const selectedCategory = watch('category');
   const selectedPriority = watch('priority');
 
-  // Handle File Selection & Immediate Web Crypto SHA-256 Hashing
+  // handleFileChange: User jab file attach karega:
+  // 1. File size check hoti hai (max 10MB)
+  // 2. Web Crypto API se turant SHA-256 hash banta hai aur UI me display hota hai
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
@@ -102,19 +107,20 @@ function GrievanceIntakeContent() {
     setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // onSubmit: Jab user "Submit Petition" button click karega:
   const onSubmit = async (data: CreateTicketInput) => {
     setIsSubmitting(true);
     setErrorMessage(null);
 
     try {
-      // Step 1: Upload attachments to S3/MinIO
+      // Step 1: Har attachment ko presigned URL ke zariye direct MinIO / S3 me upload karte hain
       const uploadedMetas: AttachmentMeta[] = [];
       for (const item of attachments) {
         const meta = await uploadAttachmentDirectly(item.file);
         uploadedMetas.push(meta);
       }
 
-      // Step 2: Generate receipt secret if anonymous
+      // Step 2: Agar user ne Anonymous chuna hai, toh browser me 32-byte secret code banate hain
       const receiptSecret = isAnonymous ? generateClientReceiptSecret() : undefined;
 
       const payload = {
@@ -124,7 +130,7 @@ function GrievanceIntakeContent() {
         attachments: uploadedMetas,
       };
 
-      // Step 3: POST /api/tickets
+      // Step 3: Fastify backend ke /api/tickets endpoint par POST request bhejte hain (with auto Idempotency-Key)
       const res = await apiFetch<any>('/api/tickets', {
         method: 'POST',
         body: JSON.stringify(payload),
@@ -132,6 +138,7 @@ function GrievanceIntakeContent() {
 
       if (res.success && res.data) {
         if (isAnonymous) {
+          // Anonymous petition par user ko receipt modal popup dikhate hain
           setCreatedTicketInfo({
             id: res.data.id || 'vishanti-' + Math.random().toString(36).substr(2, 9),
             secret: receiptSecret!,

@@ -1,16 +1,18 @@
-'use client';
+'use client'; // Client-side 72h dispute countdown & modal
 
 import React, { useState, useEffect } from 'react';
 import { DISPUTE_WINDOW_MS } from '@vishanti/shared';
 import { apiFetch } from '../lib/api-client';
 import { AlertCircle, Clock, ShieldAlert, ArrowRight, X, CheckCircle2, Lock } from 'lucide-react';
 
+// TS CONCEPT (interface DisputeWidgetProps): 
+// Is component ko ticketId, resolved timestamp, officer ka note, aur callback function chahiye
 interface DisputeWidgetProps {
   ticketId: string;
-  resolvedAt?: string | Date;
+  resolvedAt?: string | Date; // '?' ka matlab optional (string ya Date object dono chalenge)
   resolutionNote?: string;
   isAnonymous: boolean;
-  onDisputeSuccess: () => void;
+  onDisputeSuccess: () => void; // Dispute confirm hone par parent component ko inform karne wala function
 }
 
 export function DisputeWidget({
@@ -20,46 +22,50 @@ export function DisputeWidget({
   isAnonymous,
   onDisputeSuccess,
 }: DisputeWidgetProps) {
-  // If no resolvedAt is provided, fallback to current time minus 4 hours for demo preview
+  // resolvedTime: Jis waqt officer ne ticket close kiya (fallback demo ke liye 4 hours pehle)
   const resolvedTime = resolvedAt 
     ? new Date(resolvedAt).getTime() 
     : Date.now() - 4 * 3600 * 1000;
 
-  const [timeLeftMs, setTimeLeftMs] = useState<number>(0);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [disputeReason, setDisputeReason] = useState('');
-  const [receiptSecret, setReceiptSecret] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [timeLeftMs, setTimeLeftMs] = useState<number>(0);             // Remaining time in milliseconds
+  const [modalOpen, setModalOpen] = useState(false);                   // Dispute popup modal open/close
+  const [disputeReason, setDisputeReason] = useState('');              // User ka contest karne ka reason
+  const [receiptSecret, setReceiptSecret] = useState('');              // Anonymous user ka secret code
+  const [isSubmitting, setIsSubmitting] = useState(false);             // API call in progress
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);       // Error message
 
+  // useEffect: Har 1 second (1000ms) me countdown timer ko recalculate karta hai
   useEffect(() => {
     const calculateRemaining = () => {
-      const deadline = resolvedTime + DISPUTE_WINDOW_MS;
+      const deadline = resolvedTime + DISPUTE_WINDOW_MS; // Resolution time + 72 ghante
       const remaining = deadline - Date.now();
       setTimeLeftMs(remaining > 0 ? remaining : 0);
     };
 
-    calculateRemaining();
-    const interval = setInterval(calculateRemaining, 1000);
-    return () => clearInterval(interval);
+    calculateRemaining(); // Pehli baar turant calculate karo
+    const interval = setInterval(calculateRemaining, 1000); // Phir har second update karo
+    return () => clearInterval(interval); // Component unmount hone par timer clear karo
   }, [resolvedTime]);
 
-  const isExpired = timeLeftMs <= 0;
+  const isExpired = timeLeftMs <= 0; // Agar time khatam ho gaya toh true
 
-  // Format time remaining
+  // Milliseconds ko Hours, Minutes, Seconds me mathematically convert karte hain
   const hours = Math.floor(timeLeftMs / (1000 * 60 * 60));
   const minutes = Math.floor((timeLeftMs % (1000 * 60 * 60)) / (1000 * 60));
   const seconds = Math.floor((timeLeftMs % (1000 * 60)) / 1000);
 
+  // handleDisputeSubmit: Backend ko dispute call bhejta hai
   const handleDisputeSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault(); // Default HTML form reload ko roko
     setErrorMsg(null);
 
+    // Validation 1: Reason minimum 15 characters hona chahiye
     if (disputeReason.trim().length < 15) {
       setErrorMsg('Please explain your dispute reason in detail (at least 15 characters).');
       return;
     }
 
+    // Validation 2: Agar anonymous user hai, toh unka receipt secret zaroori hai
     if (isAnonymous && !receiptSecret.trim()) {
       setErrorMsg('Receipt secret is required to authenticate anonymous dispute.');
       return;
@@ -68,6 +74,7 @@ export function DisputeWidget({
     setIsSubmitting(true);
 
     try {
+      // Fastify backend ke dispute endpoint par POST request bhejte hain
       const res = await apiFetch<any>(`/api/tickets/${ticketId}/dispute`, {
         method: 'POST',
         body: JSON.stringify({
@@ -78,9 +85,9 @@ export function DisputeWidget({
 
       if (res.success) {
         setModalOpen(false);
-        onDisputeSuccess();
+        onDisputeSuccess(); // State ko turant ESCALATED me badlo
       } else {
-        // Fallback simulated success for local frontend demo
+        // Fallback simulation for local dev
         console.warn('Backend unavailable, simulating dispute transition:', res.error);
         setModalOpen(false);
         onDisputeSuccess();

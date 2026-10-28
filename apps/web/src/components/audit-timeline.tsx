@@ -1,4 +1,4 @@
-'use client';
+'use client'; // Client-side cryptographic audit chain feed & comment poster
 
 import React, { useState } from 'react';
 import { apiFetch } from '../lib/api-client';
@@ -16,16 +16,25 @@ import {
   ChevronUp,
 } from 'lucide-react';
 
+// TS CONCEPT (interface AuditEntryData):
+// Database ke AuditEntry table ka row object:
+// seq: Block sequence number (0, 1, 2...)
+// type: Event type (FILED, ASSIGNED, IN_REVIEW, RESOLVED, ESCALATED, COMMENTED)
+// actorRef: User ID ya anonymous pseudonym
+// payload: Event ki details ka JSON object
+// prevHash: Pichhle block ka SHA-256 hash (H_{n-1})
+// hash: Is current block ka SHA-256 hash (H_n)
 export interface AuditEntryData {
   seq: number;
   type: string;
   actorRef: string;
-  payload: Record<string, any>;
+  payload: Record<string, any>; // Record<string, any> ka matlab generic JS key-value object
   prevHash: string;
   hash: string;
   timestamp: string;
 }
 
+// TS CONCEPT (interface AuditTimelineProps): Component ke inputs
 interface AuditTimelineProps {
   ticketId: string;
   entries: AuditEntryData[];
@@ -33,21 +42,24 @@ interface AuditTimelineProps {
 }
 
 export function AuditTimeline({ ticketId, entries, onCommentAdded }: AuditTimelineProps) {
-  const [commentText, setCommentText] = useState('');
-  const [isPosting, setIsPosting] = useState(false);
-  const [copiedHash, setCopiedHash] = useState<string | null>(null);
-  const [expandedPayloads, setExpandedPayloads] = useState<Record<number, boolean>>({});
+  const [commentText, setCommentText] = useState('');                                   // Naye comment ka text input
+  const [isPosting, setIsPosting] = useState(false);                                     // Comment posting loading state
+  const [copiedHash, setCopiedHash] = useState<string | null>(null);                     // Copy hone par tick icon dikhane ke liye
+  const [expandedPayloads, setExpandedPayloads] = useState<Record<number, boolean>>({}); // Har block ka raw JSON view open/close state
 
+  // togglePayload: Block ka raw JSON view expand/collapse karta hai
   const togglePayload = (seq: number) => {
     setExpandedPayloads((prev) => ({ ...prev, [seq]: !prev[seq] }));
   };
 
+  // copyToClipboard: SHA-256 hash ko clipboard me copy karta hai
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopiedHash(text);
     setTimeout(() => setCopiedHash(null), 2000);
   };
 
+  // handlePostComment: Naye comment ko backend API me bhejta hai jo ledger me append hoga
   const handlePostComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentText.trim()) return;
@@ -64,7 +76,7 @@ export function AuditTimeline({ ticketId, entries, onCommentAdded }: AuditTimeli
 
       if (res.success) {
         setCommentText('');
-        onCommentAdded();
+        onCommentAdded(); // Parent page ko refresh trigger karo
       } else {
         // Fallback simulated comment for local development
         console.warn('Backend unavailable, simulating comment entry:', res.error);
@@ -78,6 +90,7 @@ export function AuditTimeline({ ticketId, entries, onCommentAdded }: AuditTimeli
     }
   };
 
+  // getTypeBadge: Event ke hisaab se color coding return karta hai
   const getTypeBadge = (type: string) => {
     switch (type) {
       case 'FILED':
@@ -123,7 +136,7 @@ export function AuditTimeline({ ticketId, entries, onCommentAdded }: AuditTimeli
           return (
             <div key={entry.seq} className="relative group">
               
-              {/* Dot on Timeline */}
+              {/* Dot on Timeline: Sequence Number */}
               <div className="absolute -left-6 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-slate-950 border-2 border-indigo-500 text-white shadow-md">
                 <span className="text-[9px] font-bold">{entry.seq}</span>
               </div>
@@ -131,7 +144,7 @@ export function AuditTimeline({ ticketId, entries, onCommentAdded }: AuditTimeli
               {/* Block Card */}
               <div className="rounded-xl border border-slate-800/90 bg-slate-950/70 p-4 space-y-3 transition hover:border-slate-700">
                 
-                {/* Block Header */}
+                {/* Block Header: Type & Timestamp */}
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center space-x-2">
                     <span

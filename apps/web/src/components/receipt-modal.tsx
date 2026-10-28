@@ -1,14 +1,16 @@
-'use client';
+'use client'; // Browser me interactive popup modal chalane ke liye
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ShieldAlert, Copy, Check, Download, ArrowRight, Key } from 'lucide-react';
 
+// TS CONCEPT (interface ReceiptModalProps):
+// Is React component ko parent page se jo props (inputs) milte hain, unka structure
 interface ReceiptModalProps {
-  isOpen: boolean;
-  ticketId: string;
-  receiptSecret: string;
-  title: string;
+  isOpen: boolean;        // Modal open hai ya band (true/false)
+  ticketId: string;      // Generated Ticket UUID
+  receiptSecret: string; // 32-byte secret code jo user ko copy karna hai
+  title: string;         // Complaint ka title
 }
 
 export function ReceiptModal({
@@ -17,17 +19,20 @@ export function ReceiptModal({
   receiptSecret,
   title,
 }: ReceiptModalProps) {
-  const router = useRouter();
-  const [copied, setCopied] = useState(false);
+  const router = useRouter();             // Next.js page navigation hook
+  const [copied, setCopied] = useState(false); // State: Copy button clicked hua ya nahi
 
+  // Agar modal open nahi hai toh kuch bhi render mat karo
   if (!isOpen) return null;
 
+  // handleCopy: Browser clipboard me secret key copy karta hai aur 2.5s ke liye 'Copied' state dikhata hai
   const handleCopy = () => {
     navigator.clipboard.writeText(receiptSecret);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
 
+  // handleDownloadTxt: Browser ke andar hi direct .txt file generate karke auto-download karwata hai
   const handleDownloadTxt = () => {
     const textContent = `=====================================================
 THE VISHANTI LEDGER - ANONYMOUS PETITION RECEIPT
@@ -44,6 +49,7 @@ The system does NOT store your identity, IP, or raw secret.
 If you lose this key, your case cannot be recovered.
 =====================================================`;
 
+    // JavaScript Blob: Text ko file stream me convert karta hai
     const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -55,6 +61,7 @@ If you lose this key, your case cannot be recovered.
     URL.revokeObjectURL(url);
   };
 
+  // handleProceed: User ko secret key ke saath tracking page par le jata hai
   const handleProceed = () => {
     router.push(`/track?key=${encodeURIComponent(receiptSecret)}`);
   };
