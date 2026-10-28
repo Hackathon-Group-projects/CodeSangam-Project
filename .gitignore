@@ -10,6 +10,7 @@ apps/web/out/
 # Production Outputs
 **/dist/
 **/build/
+*.tsbuildinfo
 
 # Environment Variables
 .env
