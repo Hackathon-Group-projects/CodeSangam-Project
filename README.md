@@ -90,6 +90,8 @@ docker compose logs -f postgres redis minio clamav
 docker compose down
 ```
 
+The root `npm run build` command first generates Prisma Client, then builds the API, web app, and worker. You can also generate the database client on its own with the command in step 5.
+
 `docker compose down` stops the services and keeps their named data volumes. `docker compose down -v` deletes the local database, Redis data, and uploaded objects; use it only when you intend to erase that local data.
 
 ## GitHub and secrets
